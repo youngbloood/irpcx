@@ -1,2 +1,4 @@
 _example/client/client
+_example/client/debug
 _example/server/server
+_example/server/debug
