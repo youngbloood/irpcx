@@ -72,6 +72,7 @@ func (mc *iclient) gocall(method string, args, reply interface{}) (*client.Call,
 
 // InitEtcdAddr will initialize the etcd cluster
 func InitEtcdAddr(etcdAddr []string) {
+	SetMode(ModeDebug)
 	lazyInit(etcdAddr)
 }
 
