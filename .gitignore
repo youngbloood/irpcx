@@ -2,3 +2,16 @@ _example/client/client
 _example/client/debug
 _example/server/server
 _example/server/debug
+
+# Folders
+rpcx-ui/*
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+
+*.exe
+*.test
+*.prof
