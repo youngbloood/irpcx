@@ -132,10 +132,16 @@ func (s *Server) Start(addr string) error {
 	}
 	s.Serve.Plugins.Add(r)
 
-	s.Serve.RegisterName("IRPCX", &IRPCX{s.store}, "")
+	serviceName := "IRPCX"
+	if s.mode == ModeDebug {
+		serviceName = "IRPCX_DEBUG"
+	}
+
+	s.Serve.RegisterName(serviceName, &IRPCX{s.store}, "")
 	if s.mode == ModeDebug {
 		log.Printf("Listening and serving TCP on : %s\n", addr)
 	}
+
 	if err := s.Serve.Serve("tcp", addr); err != nil {
 		log.Fatalln(err)
 	}

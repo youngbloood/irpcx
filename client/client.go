@@ -5,10 +5,11 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"irpcx"
 	"log"
 	"strings"
 	"sync"
+
+	"github.com/youngbloood/irpcx"
 
 	"github.com/smallnest/rpcx/client"
 )
