@@ -9,9 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/youngbloood/irpcx"
-
 	"github.com/smallnest/rpcx/client"
+	"github.com/youngbloood/irpcx"
 )
 
 var (
@@ -23,6 +22,7 @@ func lazyInit(addr []string) {
 	once.Do(
 		func() {
 			etcdAddr = append(etcdAddr, addr...)
+			irpcxCli.cli = make(map[string]*iclient, 100)
 		})
 }
 
@@ -33,6 +33,16 @@ type iclient struct {
 
 var rpcClient = make(map[string]*iclient)
 
+type irpcxClientMap map[string]*iclient
+
+type irpcxClient struct {
+	cli irpcxClientMap
+	// Hash is the func to generate basePath+servicePath hash value
+	hash func(string) string
+}
+
+var irpcxCli irpcxClient
+
 func get(basePath, servicePath string) *iclient {
 	if etcdAddr == nil || len(etcdAddr) == 0 {
 		log.Fatalln("invoke func client.InitEtcdAddr(etcdAddr []string) to initialize etcd cluster")
@@ -41,26 +51,50 @@ func get(basePath, servicePath string) *iclient {
 	basePath = "/" + basePath
 	servicePath = strings.Trim(servicePath, "/")
 	allPath := basePath + "/" + servicePath
-	token := hash(allPath)
+	token := hashSelf(allPath)
 
-	cli, exist := rpcClient[token]
+	cli, exist := irpcxCli.cli[token]
 	if !exist {
-		discovery := client.NewEtcdDiscovery(basePath, servicePath, etcdAddr, nil)
-		xclient := client.NewXClient(servicePath, client.Failover, client.RandomSelect, discovery, client.DefaultOption)
-		mc := new(iclient)
-		mc.cli = xclient
-		mc.discovery = discovery
-		rpcClient[token] = mc
-		return mc
+		return set(basePath, servicePath, token)
 	}
 	return cli
 }
+func set(basePath, servicePath, token string) *iclient {
+	discovery := client.NewEtcdDiscovery(basePath, servicePath, etcdAddr, nil)
+	xclient := client.NewXClient(servicePath, client.Failover, client.RandomSelect, discovery, client.DefaultOption)
+	mc := new(iclient)
+	mc.cli = xclient
+	mc.discovery = discovery
 
+	irpcxCli.cli[token] = mc
+	rpcClient[token] = mc
+	return mc
+}
+
+// SetHashFunc . define youself hash func
+func SetHashFunc(hash func(string) string) {
+	irpcxCli.hash = hash
+}
+
+// SetXClient . define youself XClient
+func SetXClient(basePath, servicePath string, xClient client.XClient) {
+	token := hashSelf(basePath + "/" + servicePath)
+
+	c := new(iclient)
+	c.cli = xClient
+	irpcxCli.cli[token] = c
+}
 func hash(str string) string {
 	md := md5.New()
 	md.Write([]byte(str)) // 需要加密的字符串为 str
 	cipherStr := md.Sum(nil)
 	return fmt.Sprintf("%s", hex.EncodeToString(cipherStr)) // 输出加密结果
+}
+func hashSelf(src string) string {
+	if irpcxCli.hash != nil {
+		return irpcxCli.hash(src)
+	}
+	return hash(src)
 }
 
 func (mc *iclient) call(method string, args, reply interface{}) error {

@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Request fo irpcx
+// Request of irpcx
 type Request struct {
 	Body   []byte
 	Path   string

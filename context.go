@@ -6,6 +6,14 @@ type Context struct {
 	Resp *Response
 }
 
+// SetResp . set the ctx's response
+func (c *Context) SetResp(obj interface{}) {
+	if c.Resp == nil {
+		return
+	}
+	c.Resp.Data = obj
+}
+
 // TODO: Bind()
 // func (c *Context) Bind(obj interface{}) error {
 // 	mime := c.getMIME()

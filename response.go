@@ -8,6 +8,7 @@ import (
 // Response of irpcx
 type Response struct {
 	Body   []byte
+	Data   interface{}
 	Status int
 	Writer http.ResponseWriter
 }
