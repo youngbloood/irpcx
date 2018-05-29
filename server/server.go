@@ -56,6 +56,11 @@ func (s *Server) SetMode(mode Mode) {
 	}
 }
 
+// GetMode return the Server Mode
+func (s *Server) GetMode() Mode {
+	return s.mode
+}
+
 // Register the obj's function
 func (s *Server) Register(obj interface{}) {
 	typ := reflect.TypeOf(obj)
@@ -72,11 +77,12 @@ func (s *Server) RegisterName(name string, obj interface{}) {
 		if t.Type.NumIn() != 2 {
 			continue
 		}
+
 		// TODO: if the first parameter is not *irpcx.Context type ,then continue
 		// for j := 0; j < t.Type.NumIn(); j++ {
 		// 	if j == 1 {
-		// 		v.
-		// 		if _, ok := t.Type.In(j).Interface().(*irpcx.Context); !ok {
+		// 		var inter interface{} = reflect.New(t.Type.In(j)).Interface()
+		// 		if _, ok := inter.(*irpcx.Context); !ok {
 		// 			continue
 		// 		}
 		// 	}
@@ -132,10 +138,7 @@ func (s *Server) Start(addr string) error {
 	}
 	s.Serve.Plugins.Add(r)
 
-	serviceName := "IRPCX"
-	if s.mode == ModeDebug {
-		serviceName = "IRPCX_DEBUG"
-	}
+	serviceName := s.getServiceName()
 
 	s.Serve.RegisterName(serviceName, &IRPCX{s.store}, "")
 	if s.mode == ModeDebug {
@@ -158,7 +161,9 @@ func (s *Server) StartWithPlugin(addr string, plugin server.Plugin) error {
 	// add plugin
 	s.Serve.Plugins.Add(plugin)
 
-	s.Serve.RegisterName("IRPCX", &IRPCX{s.store}, "")
+	serviceName := s.getServiceName()
+
+	s.Serve.RegisterName(serviceName, &IRPCX{s.store}, "")
 	if s.mode == ModeDebug {
 		log.Printf("Listening and serving TCP on : %s\n", addr)
 	}
@@ -180,3 +185,15 @@ func initAddr(addr string) (string, error) {
 	}
 	return net.JoinHostPort(host, port), nil
 }
+
+func (s *Server) getServiceName() string {
+	serviceName := "IRPCX"
+	if s.mode == ModeDebug {
+		serviceName = "IRPCX_DEBUG"
+	}
+	return serviceName
+}
+
+// func SetServer(ser *server.Server){
+// 	ser.Plugins.
+// }

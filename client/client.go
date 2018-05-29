@@ -13,6 +13,40 @@ import (
 	"github.com/youngbloood/irpcx"
 )
 
+// Mode mode
+type Mode string
+
+const (
+	// ModeRelease mean release
+	ModeRelease Mode = "release"
+	// ModeDebug mean debug
+	ModeDebug Mode = "debug"
+)
+
+/**   MODE   */
+
+var _mode Mode
+
+// SetMode . set the client mode
+func SetMode(mode Mode) {
+	if len(irpcxCli.cli) > 0 {
+		return
+	}
+	_mode = mode
+}
+
+// GetMode . return the client mode
+func GetMode() Mode {
+	return _mode
+}
+
+func getParam() (servicePath, method string) {
+	if GetMode() == ModeRelease {
+		return "IRPCX", "Do"
+	}
+	return "IRPCX_DEBUG", "Do"
+}
+
 var (
 	etcdAddr []string
 	once     sync.Once
@@ -25,6 +59,8 @@ func lazyInit(addr []string) {
 			irpcxCli.cli = make(map[string]*iclient, 100)
 		})
 }
+
+/** IPRC-Client */
 
 type iclient struct {
 	discovery client.ServiceDiscovery
@@ -73,6 +109,9 @@ func set(basePath, servicePath, token string) *iclient {
 
 // SetHashFunc . define youself hash func
 func SetHashFunc(hash func(string) string) {
+	if len(irpcxCli.cli) > 0 {
+		return
+	}
 	irpcxCli.hash = hash
 }
 
@@ -103,6 +142,18 @@ func (mc *iclient) call(method string, args, reply interface{}) error {
 func (mc *iclient) gocall(method string, args, reply interface{}) (*client.Call, error) {
 	return mc.cli.Go(context.Background(), method, args, reply, nil)
 }
+func (mc *iclient) fork(method string, args, reply interface{}) error {
+	return mc.cli.Fork(context.Background(), method, args, reply)
+}
+func (mc *iclient) broadcast(method string, args, reply interface{}) error {
+	return mc.cli.Broadcast(context.Background(), method, args, reply)
+}
+func (mc *iclient) close() error {
+	return mc.cli.Close()
+}
+func (mc *iclient) auth(src string) {
+	mc.cli.Auth(src)
+}
 
 // InitEtcdAddr will initialize the etcd cluster
 func InitEtcdAddr(etcdAddr []string) {
@@ -132,31 +183,40 @@ func Go(req *irpcx.Request) (call *client.Call, reply *irpcx.Response, err error
 	return
 }
 
-// Mode mode
-type Mode string
-
-const (
-	// ModeRelease mean release
-	ModeRelease Mode = "release"
-	// ModeDebug mean debug
-	ModeDebug Mode = "debug"
-)
-
-var _mode Mode
-
-// SetMode . set the client mode
-func SetMode(mode Mode) {
-	_mode = mode
-}
-
-// GetMode . return the client mode
-func GetMode() Mode {
-	return _mode
-}
-
-func getParam() (servicePath, method string) {
-	if GetMode() == ModeRelease {
-		return "IRPCX", "Do"
+// Fork sends requests to all servers and Success once one server returns OK.
+// FailMode and SelectMode are meanless for this method.
+func Fork(req *irpcx.Request) (reply *irpcx.Response, err error) {
+	reply = new(irpcx.Response)
+	servicePath, method := getParam()
+	err = get(req.BasePath, servicePath).fork(method, req, reply)
+	if err != nil {
+		return nil, err
 	}
-	return "IRPCX_DEBUG", "Do"
+	return
+}
+
+// Broadcast sends requests to all servers and Success only when all servers return OK.
+// FailMode and SelectMode are meanless for this method.
+// Please set timeout to avoid hanging.
+func Broadcast(req *irpcx.Request) (reply *irpcx.Response, err error) {
+
+	reply = new(irpcx.Response)
+	servicePath, method := getParam()
+	err = get(req.BasePath, servicePath).broadcast(method, req, reply)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// Close closes this client and its underlying connnections to services.
+func Close(basePath string) error {
+	servicePath, _ := getParam()
+	return get(basePath, servicePath).close()
+}
+
+// Auth sets s token for Authentication.
+func Auth(basePath string, auth string) {
+	servicePath, _ := getParam()
+	get(basePath, servicePath).auth(auth)
 }
