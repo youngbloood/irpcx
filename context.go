@@ -11,7 +11,7 @@ func (c *Context) SetResp(obj interface{}) {
 	if c.Resp == nil {
 		return
 	}
-	c.Resp.Data = obj
+	c.Resp.data = obj
 }
 
 // TODO: Bind()

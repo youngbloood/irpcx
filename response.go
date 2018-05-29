@@ -7,19 +7,25 @@ import (
 
 // Response of irpcx
 type Response struct {
-	Body   []byte
-	Data   interface{}
+	body   []byte
+	data   interface{}
 	Status int
 	Writer http.ResponseWriter
 }
 
 // Unmarshal will decode the Response.Body to obj
 func (resp *Response) Unmarshal(obj interface{}) error {
-	return json.Unmarshal(resp.Body, obj)
+	return json.Unmarshal(resp.body, obj)
 }
 
 // Marshal will encode the obj to Response.Body
 func (resp *Response) Marshal(obj interface{}) (err error) {
-	resp.Body, err = json.Marshal(obj)
+	resp.body, err = json.Marshal(obj)
+	return
+}
+
+// Encode the data to body
+func (resp *Response) Encode() (err error) {
+	resp.body, err = json.Marshal(resp.data)
 	return
 }

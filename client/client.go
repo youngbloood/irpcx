@@ -107,6 +107,11 @@ func set(basePath, servicePath, token string) *iclient {
 	return mc
 }
 
+func del(basePath, servicePath string) {
+	token := hashSelf(basePath + "/" + servicePath)
+	delete(irpcxCli.cli, token)
+}
+
 // SetHashFunc . define youself hash func
 func SetHashFunc(hash func(string) string) {
 	if len(irpcxCli.cli) > 0 {
@@ -212,7 +217,11 @@ func Broadcast(req *irpcx.Request) (reply *irpcx.Response, err error) {
 // Close closes this client and its underlying connnections to services.
 func Close(basePath string) error {
 	servicePath, _ := getParam()
-	return get(basePath, servicePath).close()
+	if err := get(basePath, servicePath).close(); err != nil {
+		return err
+	}
+	del(basePath, servicePath)
+	return nil
 }
 
 // Auth sets s token for Authentication.

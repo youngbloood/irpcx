@@ -44,5 +44,6 @@ func (r *IRPCX) Do(ctx context.Context, request *irpcx.Request, response *irpcx.
 		return err
 	}
 
-	return nil
+	return response.Encode()
+
 }
