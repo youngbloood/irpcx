@@ -83,8 +83,7 @@ func get(basePath, servicePath string) *iclient {
 	if etcdAddr == nil || len(etcdAddr) == 0 {
 		log.Fatalln("invoke func client.InitEtcdAddr(etcdAddr []string) to initialize etcd cluster")
 	}
-	basePath = strings.Trim(basePath, "/")
-	basePath = "/" + basePath
+	basePath = "/" + strings.Trim(basePath, "/")
 	servicePath = strings.Trim(servicePath, "/")
 	allPath := basePath + "/" + servicePath
 	token := hashSelf(allPath)

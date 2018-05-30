@@ -20,18 +20,19 @@ func main() {
 
 	// sync invoke rpc
 	resp, err := client.Call(req)
+	defer client.Close(basePath)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Call.resp=", string(resp.Body))
+	fmt.Println("Call.resp=", string(resp.Body()))
 
 	// async invoke rpc
 	call, resp, err := client.Go(req)
-	fmt.Println("Go.resp1=", string(resp.Body))
+	fmt.Println("Go.resp1=", string(resp.Body()))
 	if err != nil {
 		panic(err)
 	}
 	<-call.Done
-	fmt.Println("Go.resp2=", string(resp.Body))
+	fmt.Println("Go.resp2=", string(resp.Body()))
 
 }

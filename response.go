@@ -29,3 +29,13 @@ func (resp *Response) Encode() (err error) {
 	resp.body, err = json.Marshal(resp.data)
 	return
 }
+
+// Body return resp's body
+func (resp *Response) Body() []byte {
+	return resp.body
+}
+
+// Data return resp's data
+func (resp *Response) Data() interface{} {
+	return resp.data
+}
