@@ -9,6 +9,8 @@ import (
 
 type functioner func(*irpcx.Context) error
 
+var functor functioner
+
 // IRPCX struct
 type IRPCX struct {
 	store store

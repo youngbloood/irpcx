@@ -78,10 +78,18 @@ func (s *Server) RegisterName(name string, obj interface{}) {
 			continue
 		}
 
+		//fmtT := reflect.TypeOf(functor)
+
 		// TODO: if the first parameter is not *irpcx.Context type ,then continue
 		// for j := 0; j < t.Type.NumIn(); j++ {
 		// 	if j == 1 {
+		// 		t.Type.In(j).Elem().c
 		// 		var inter interface{} = reflect.New(t.Type.In(j)).Interface()
+		// 		switch d := inter.(type) {
+		// 		default:
+		// 			fmt.Println("d=", d)
+		// 		}
+
 		// 		if _, ok := inter.(*irpcx.Context); !ok {
 		// 			continue
 		// 		}

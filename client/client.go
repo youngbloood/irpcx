@@ -29,7 +29,7 @@ var _mode Mode
 
 // SetMode . set the client mode
 func SetMode(mode Mode) {
-	if len(irpcxCli.cli) > 0 {
+	if len(defaultClient.cli) > 0 {
 		return
 	}
 	_mode = mode
@@ -56,7 +56,7 @@ func lazyInit(addr []string) {
 	once.Do(
 		func() {
 			etcdAddr = append(etcdAddr, addr...)
-			irpcxCli.cli = make(map[string]*iclient, 100)
+			defaultClient.cli = make(map[string]*iclient, 100)
 		})
 }
 
@@ -77,7 +77,7 @@ type irpcxClient struct {
 	hash func(string) string
 }
 
-var irpcxCli irpcxClient
+var defaultClient irpcxClient
 
 func get(basePath, servicePath string) *iclient {
 	if etcdAddr == nil || len(etcdAddr) == 0 {
@@ -88,7 +88,7 @@ func get(basePath, servicePath string) *iclient {
 	allPath := basePath + "/" + servicePath
 	token := hashSelf(allPath)
 
-	cli, exist := irpcxCli.cli[token]
+	cli, exist := defaultClient.cli[token]
 	if !exist {
 		return set(basePath, servicePath, token)
 	}
@@ -101,22 +101,22 @@ func set(basePath, servicePath, token string) *iclient {
 	mc.cli = xclient
 	mc.discovery = discovery
 
-	irpcxCli.cli[token] = mc
+	defaultClient.cli[token] = mc
 	rpcClient[token] = mc
 	return mc
 }
 
 func del(basePath, servicePath string) {
 	token := hashSelf(basePath + "/" + servicePath)
-	delete(irpcxCli.cli, token)
+	delete(defaultClient.cli, token)
 }
 
 // SetHashFunc . define youself hash func
 func SetHashFunc(hash func(string) string) {
-	if len(irpcxCli.cli) > 0 {
+	if len(defaultClient.cli) > 0 {
 		return
 	}
-	irpcxCli.hash = hash
+	defaultClient.hash = hash
 }
 
 // SetXClient . define youself XClient
@@ -125,7 +125,7 @@ func SetXClient(basePath, servicePath string, xClient client.XClient) {
 
 	c := new(iclient)
 	c.cli = xClient
-	irpcxCli.cli[token] = c
+	defaultClient.cli[token] = c
 }
 func hash(str string) string {
 	md := md5.New()
@@ -134,8 +134,8 @@ func hash(str string) string {
 	return fmt.Sprintf("%s", hex.EncodeToString(cipherStr)) // 输出加密结果
 }
 func hashSelf(src string) string {
-	if irpcxCli.hash != nil {
-		return irpcxCli.hash(src)
+	if defaultClient.hash != nil {
+		return defaultClient.hash(src)
 	}
 	return hash(src)
 }
