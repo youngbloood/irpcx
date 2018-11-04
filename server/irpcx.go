@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"context"
 	"reflect"
 
@@ -17,16 +18,28 @@ type IRPCX struct {
 }
 
 // Do will register as a rpc function in rpcx
-func (r *IRPCX) Do(ctx context.Context, request *irpcx.Request, response *irpcx.Response) error {
+func (r *IRPCX) Do(ctx context.Context, request *irpcx.Request, response *irpcx.Response)(err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("[service internal error]: %v", r)
+		}
+	}()
 
-	fn, err := r.store.get(request.Service, request.Method)
+	var fn *function
+	fn, err = r.store.get(request.Service, request.Method)
 	if err != nil {
 		return err
 	}
 
 	var in []reflect.Value
 	for i, v := range fn.In {
-		vt := reflect.New(v).Elem()
+		var vt reflect.Value
+		if v.Kind() != reflect.Ptr{
+			vt = reflect.New(v).Elem()
+		}else{
+			vt = reflect.New(reflect.PtrTo(v).Elem().Elem())
+		}
+		
 		switch i {
 		case 1:
 			ctxParam := new(irpcx.Context)
@@ -46,6 +59,8 @@ func (r *IRPCX) Do(ctx context.Context, request *irpcx.Request, response *irpcx.
 		return err
 	}
 
-	return response.Encode()
+	fmt.Println("req1111=",string(request.Body))
 
+	fmt.Println("resp1111=",string(response.Body()))
+	return nil
 }

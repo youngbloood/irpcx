@@ -64,7 +64,14 @@ func (s *Server) GetMode() Mode {
 // Register the obj's function
 func (s *Server) Register(obj interface{}) {
 	typ := reflect.TypeOf(obj)
-	name := path.Base(typ.Name())
+	var name string
+	if typ.Kind()!=reflect.Ptr{
+		name = path.Base(typ.Name())
+	}else{
+		name = typ.Elem().Name()
+	}
+
+	
 	s.RegisterName(name, obj)
 }
 
@@ -144,6 +151,7 @@ func (s *Server) Start(addr string) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	s.Serve.Plugins.Add(r)
 
 	serviceName := s.getServiceName()

@@ -61,7 +61,6 @@ func lazyInit(addr []string) {
 }
 
 /** IPRC-Client */
-
 type iclient struct {
 	discovery client.ServiceDiscovery
 	cli       client.XClient
@@ -96,13 +95,13 @@ func get(basePath, servicePath string) *iclient {
 }
 func set(basePath, servicePath, token string) *iclient {
 	discovery := client.NewEtcdDiscovery(basePath, servicePath, etcdAddr, nil)
-	xclient := client.NewXClient(servicePath, client.Failover, client.RandomSelect, discovery, client.DefaultOption)
+	xclient := client.NewXClient(servicePath, client.Failover, client.ConsistentHash, discovery, client.DefaultOption)
 	mc := new(iclient)
 	mc.cli = xclient
 	mc.discovery = discovery
 
 	defaultClient.cli[token] = mc
-	rpcClient[token] = mc
+//rpcClient[token] = mc
 	return mc
 }
 
@@ -169,6 +168,8 @@ func InitEtcdAddr(etcdAddr []string) {
 func Call(req *irpcx.Request) (reply *irpcx.Response, err error) {
 	reply = new(irpcx.Response)
 	servicePath, method := getParam()
+
+
 	err = get(req.BasePath, servicePath).call(method, req, reply)
 	if err != nil {
 		return nil, err
@@ -180,7 +181,7 @@ func Call(req *irpcx.Request) (reply *irpcx.Response, err error) {
 func Go(req *irpcx.Request) (call *client.Call, reply *irpcx.Response, err error) {
 	reply = new(irpcx.Response)
 	servicePath, method := getParam()
-	call, err = get(req.BasePath, servicePath).gocall(method, req, reply)
+	call, err = get(req.BasePath, servicePath).gocall(method, req, &reply)
 	if err != nil {
 		return call, nil, err
 	}

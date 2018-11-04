@@ -10,7 +10,7 @@ func main() {
 
 	serve := server.New(basePath, []string{"127.0.0.1:2379"})
 
-	serve.Register(Test{})
+	serve.Register(&Test{})
 
 	serve.Start(":8888")
 
